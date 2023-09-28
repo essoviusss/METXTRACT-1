@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "485936393262",
+    "firebase_url": "https://metxtract-e67ec-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "metxtract-e67ec",
+    "storage_bucket": "metxtract-e67ec.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485936393262:android:6294497cba35b0a20643bf",
+        "android_client_info": {
+          "package_name": "com.example.metxtract"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "485936393262-ab3rv4kkll3o0cnc9nms8ima70ep4ofu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZHIe_j4MBKScB32Un9QP4UJri5WJlj_o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "485936393262-ab3rv4kkll3o0cnc9nms8ima70ep4ofu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
