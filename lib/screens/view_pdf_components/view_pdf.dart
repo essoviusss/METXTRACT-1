@@ -1,13 +1,11 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:metxtract/utils/color_utils.dart';
-import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class ViewPdf extends StatefulWidget {
   final Uint8List pdfBytes;
-  final VoidCallback uploadCallback; // Callback for uploading PDF.
+  final VoidCallback uploadCallback;
 
   const ViewPdf(
       {Key? key, required this.pdfBytes, required this.uploadCallback})
@@ -18,58 +16,9 @@ class ViewPdf extends StatefulWidget {
 }
 
 class _ViewPdfState extends State<ViewPdf> {
-  Future<List<int>> _readDocumentData(String name) async {
-    final ByteData data = await rootBundle.load('assets/$name');
-    return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-  }
-
-  void _showResult(String text) {
-    // Replace line breaks with spaces to make the text continuous with single spacing.
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Extracted text'),
-          content: Scrollbar(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              child: Text(text),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  extractText() async {
-    //Load an existing PDF document.
-    // Load the PDF document from the Uint8List.
-    PdfDocument document = PdfDocument(inputBytes: widget.pdfBytes);
-
-    // Create a new instance of the PdfTextExtractor.
-    PdfTextExtractor extractor = PdfTextExtractor(document);
-
-    // Extract all the text from the document.
-    String text = extractor.extractText(startPageIndex: 0);
-
-    // Display the text.
-    _showResult(text);
-  }
-
+  //Initialize PdfViewerControl.
   uploadToFirebase() async {
-    await extractText();
-    // widget.uploadCallback;
+    widget.uploadCallback;
   }
 
   @override
