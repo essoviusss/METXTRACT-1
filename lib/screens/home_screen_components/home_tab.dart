@@ -61,7 +61,7 @@ class _HomeTabState extends State<HomeTab> {
 
     // Create a new PDF document for conversion.
     PdfDocument document = PdfDocument();
-
+    document.pageSettings.margins.all = 0;
     // Iterate over the scanned pictures and add them to the PDF page.
     for (var picture in _scannedPictures) {
       // Read the image data.
@@ -157,7 +157,7 @@ class _HomeTabState extends State<HomeTab> {
     }
 
     final Reference storageReference =
-        FirebaseStorage.instance.ref().child("images").child(uid!);
+        FirebaseStorage.instance.ref().child("pdfFiles").child(uid!);
 
     try {
       // Upload the PDF file to Firebase Storage.

@@ -36,11 +36,11 @@ class _ViewPdfState extends State<ViewPdf> {
         widget.pdfBytes,
         key: GlobalKey<SfPdfViewerState>(),
       ),
-      floatingActionButton: TextButton(
+      floatingActionButton: ElevatedButton(
         style: ButtonStyle(
             backgroundColor:
                 MaterialStateProperty.all<Color>(ColorUtils.darkPurple)),
-        onPressed: uploadToFirebase,
+        onPressed: widget.uploadCallback,
         child: const Text(
           'Upload PDF',
           style: TextStyle(color: Colors.white),
