@@ -14,6 +14,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
 import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:metxtract/screens/view_pdf_components/view_pdf.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({Key? key}) : super(key: key);
@@ -28,9 +29,6 @@ class _HomeTabState extends State<HomeTab> {
   Uint8List? _pdfBytes;
   Uint8List? uint8List;
   Uint8List? uint8List1;
-  CollectionReference pdf = FirebaseFirestore.instance.collection('pdfList');
-  var uuid = const Uuid();
-  String? uid;
 
   @override
   void initState() {
@@ -86,17 +84,6 @@ class _HomeTabState extends State<HomeTab> {
 
     // Dispose of the PDF document.
     document.dispose();
-
-    // Upload the generated PDF to Firebase Storage.
-    await uploadFile(bytes);
-  }
-
-  Future<void> uploadSelectedFile() async {
-    if (uint8List1!.isNotEmpty) {
-      await uploadFile(uint8List1!);
-    } else {
-      Fluttertoast.showToast(msg: "Selected file has no content.");
-    }
   }
 
   Future<void> viewPDF() async {
@@ -139,57 +126,9 @@ class _HomeTabState extends State<HomeTab> {
       MaterialPageRoute(
         builder: (context) => ViewPdf(
           pdfBytes: uint8List!,
-          uploadCallback: () {
-            // Call the upload method here (you can reuse the code from convertImagesToPDF).
-            uploadConvertedFile();
-          },
         ),
       ),
     );
-  }
-
-  Future<void> uploadFile(List<int> pdfBytes) async {
-    uid = uuid.v1();
-
-    if (pdfBytes.isEmpty) {
-      Fluttertoast.showToast(msg: "No PDF data to upload!");
-      return;
-    }
-
-    final Reference storageReference =
-        FirebaseStorage.instance.ref().child("pdfFiles").child(uid!);
-
-    try {
-      // Upload the PDF file to Firebase Storage.
-      final UploadTask uploadTask =
-          storageReference.putData(Uint8List.fromList(pdfBytes));
-
-      // Monitor the upload progress.
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        print(
-            'Upload Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%');
-      });
-
-      // Await the completion of the upload.
-      await uploadTask;
-
-      // Get the download URL for the uploaded file.
-      final String downloadUrl = await storageReference.getDownloadURL();
-
-      pdf.doc(uid).set({
-        "title": "",
-        "author/s": "",
-        "publication_date": "",
-        "pdfUID": uid,
-        "downloadUrl": downloadUrl,
-      }).then((value) {
-        Fluttertoast.showToast(msg: "PDF uploaded successfully!");
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MyApp()));
-      });
-    } catch (e) {
-      Fluttertoast.showToast(msg: "Error uploading PDF");
-    }
   }
 
   Future<void> uploadPDF() async {
@@ -213,9 +152,6 @@ class _HomeTabState extends State<HomeTab> {
             MaterialPageRoute(
               builder: (context) => ViewPdf(
                 pdfBytes: uint8List1!,
-                uploadCallback: () {
-                  uploadSelectedFile();
-                },
               ),
             ),
           );

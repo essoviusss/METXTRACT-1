@@ -51,7 +51,9 @@ dependencies:
   cloud_firestore: ^4.9.2
   file_picker: ^5.5.0
   uuid: ^3.0.5
-  
+  pdfx: ^2.4.0
+  google_mlkit_text_recognition: ^0.10.0
+
 
 dev_dependencies:
   flutter_test:
