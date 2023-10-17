@@ -2,19 +2,14 @@
 
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/services.dart';
-import 'package:metxtract/main.dart';
 import 'package:metxtract/screens/view_pdf_components/view_pdf.dart';
 import 'package:metxtract/utils/color_utils.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
-import 'package:uuid/uuid.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:metxtract/screens/view_pdf_components/view_pdf.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({Key? key}) : super(key: key);
@@ -75,10 +70,6 @@ class _HomeTabState extends State<HomeTab> {
       page.graphics.drawImage(
           image, Rect.fromLTWH(0, 0, page.size.width, page.size.height));
     }
-
-    List<int>? bytes;
-    // Save the PDF document to a byte array.
-    bytes = await document.save();
 
     print('_pdfBytes length: ${_pdfBytes?.length}');
 

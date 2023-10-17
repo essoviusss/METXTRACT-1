@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:metxtract/main.dart';
+import 'package:metxtract/models/pdf_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -34,6 +35,7 @@ class _ViewPdfState extends State<ViewPdf> {
   String? uid;
   final List<String> textBlocks = [];
   String? authorsText;
+  var now = DateTime.now();
 
   getImage() async {
     final document = await PdfDocument.openData(widget.pdfBytes);
@@ -123,7 +125,7 @@ class _ViewPdfState extends State<ViewPdf> {
                       decoration: const InputDecoration(labelText: "Author/s"),
                       controller: TextEditingController(text: authorsText),
                       readOnly: false,
-                      maxLines: null, // Allow multiple lines
+                      maxLines: null,
                     ),
                     TextField(
                       decoration:
@@ -139,7 +141,7 @@ class _ViewPdfState extends State<ViewPdf> {
                   onPressed: () {
                     uploadFile();
                   },
-                  child: Text('Upload PDF'),
+                  child: const Text('Upload PDF'),
                 ),
               ],
             );
@@ -252,19 +254,24 @@ class _ViewPdfState extends State<ViewPdf> {
       // Get the download URL for the uploaded file.
       final String downloadUrl = await storageReference.getDownloadURL();
 
-      pdf.doc(uid).set({
-        "title": textBlocks[0],
-        "author/s": authorsText,
-        "publication_date": textBlocks[4],
-        "pdfUID": uid,
-        "downloadUrl": downloadUrl,
-      }).then((value) {
-        Fluttertoast.showToast(msg: "PDF uploaded successfully!");
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MyApp()));
-      });
+      Pdf pdfModel = Pdf();
+      pdfModel.title = textBlocks[0];
+      pdfModel.authors = authorsText;
+      pdfModel.publicationDate = textBlocks[4];
+      pdfModel.uid = uid;
+      pdfModel.downloadUrl = downloadUrl;
+      pdfModel.dateAdded = now;
+
+      pdf.doc(pdfModel.uid).set(pdfModel.toMap()).then(
+        (value) {
+          Fluttertoast.showToast(msg: "PDF uploaded successfully!");
+          Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const MyApp()));
+        },
+      );
     } catch (e) {
-      Fluttertoast.showToast(msg: "Error uploading PDF");
+      Fluttertoast.showToast(msg: "Error uploading PDF $e");
+      print("Error uploading PDF $e");
     }
   }
 
