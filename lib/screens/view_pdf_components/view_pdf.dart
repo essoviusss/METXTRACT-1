@@ -42,14 +42,11 @@ class _ViewPdfState extends State<ViewPdf> {
 
     final page = await document.getPage(1);
 
-    // Increase resolution
     image = await page.render(
       width: page.width * 2,
       height: page.height * 2,
       format: PdfPageImageFormat.jpeg,
     );
-
-    // Apply image enhancement and binarization here if needed
 
     inputImage = await convertPdfPageImageToInputImage(image!);
 
@@ -69,21 +66,16 @@ class _ViewPdfState extends State<ViewPdf> {
         final RecognizedText recognizedText =
             await textRecognizer.processImage(inputImage);
 
-        // Close the text recognizer as soon as you're done processing
         textRecognizer.close();
 
-        // Process recognized text to group into blocks based on spacing
-
         String currentBlock = '';
-        int blockNumber = 1; // Initialize block number
-        double previousBlockBottom =
-            0.0; // Initialize the bottom of the previous block
+        int blockNumber = 1;
+        double previousBlockBottom = 0.0;
 
         for (TextBlock block in recognizedText.blocks) {
           String blockText = block.text;
           double blockTop = block.boundingBox.top;
 
-          // Adjust the threshold and check for spacing relative to the previous block's bottom
           if (blockTop - previousBlockBottom > 20.0) {
             if (currentBlock.isNotEmpty) {
               textBlocks.add(currentBlock);
@@ -92,9 +84,8 @@ class _ViewPdfState extends State<ViewPdf> {
             }
           }
 
-          currentBlock += '$blockText '; // Add space between words
-          previousBlockBottom =
-              block.boundingBox.bottom; // Update previous block's bottom
+          currentBlock += '$blockText ';
+          previousBlockBottom = block.boundingBox.bottom;
         }
 
         // Add the last block
@@ -139,7 +130,7 @@ class _ViewPdfState extends State<ViewPdf> {
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
-                    uploadFile();
+                    uploadFiles();
                   },
                   child: const Text('Upload PDF'),
                 ),
@@ -189,9 +180,8 @@ class _ViewPdfState extends State<ViewPdf> {
             pdfPageImage.height!.toDouble(),
           ),
           rotation: InputImageRotation.rotation0deg,
-          format: inputImageFormat, // Set the expected format here
-          bytesPerRow:
-              pdfPageImage.width! * 4, // You may need to adjust this value
+          format: inputImageFormat,
+          bytesPerRow: pdfPageImage.width! * 4,
         ),
       );
 
@@ -203,7 +193,7 @@ class _ViewPdfState extends State<ViewPdf> {
 
   showImageDialog(final image) async {
     if (image == null) {
-      // Handle the case where the image is not available.
+      Fluttertoast.showToast(msg: "No Image Found!");
       return;
     }
 
@@ -211,8 +201,7 @@ class _ViewPdfState extends State<ViewPdf> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          content:
-              Image.memory(image.bytes), // Display the image using Image.memory
+          content: Image.memory(image.bytes),
           actions: <Widget>[
             TextButton(
               onPressed: () async {
@@ -226,40 +215,56 @@ class _ViewPdfState extends State<ViewPdf> {
     );
   }
 
-  Future<void> uploadFile() async {
+  Future<void> uploadFiles() async {
     uid = uuid.v1();
 
-    if (widget.pdfBytes.isEmpty) {
-      Fluttertoast.showToast(msg: "No PDF data to upload!");
+    if (widget.pdfBytes.isEmpty || inputImage == null) {
+      Fluttertoast.showToast(msg: "No PDF data or image to upload!");
       return;
     }
 
-    final Reference storageReference =
+    final Reference pdfStorageReference =
         FirebaseStorage.instance.ref().child("pdfFiles").child(uid!);
+    final Reference imageStorageReference =
+        FirebaseStorage.instance.ref().child("thumbnails").child(uid!);
 
     try {
       // Upload the PDF file to Firebase Storage.
-      final UploadTask uploadTask =
-          storageReference.putData(Uint8List.fromList(widget.pdfBytes));
+      final UploadTask pdfUploadTask =
+          pdfStorageReference.putData(Uint8List.fromList(widget.pdfBytes));
 
-      // Monitor the upload progress.
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+      // Upload the input image to Firebase Storage.
+      final UploadTask imageUploadTask =
+          imageStorageReference.putData(Uint8List.fromList(inputImage!.bytes!));
+
+      // Monitor the upload progress for both tasks.
+      pdfUploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         print(
-            'Upload Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%');
+            'PDF Upload Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%');
       });
 
-      // Await the completion of the upload.
-      await uploadTask;
+      imageUploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        print(
+            'Image Upload Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%');
+      });
 
-      // Get the download URL for the uploaded file.
-      final String downloadUrl = await storageReference.getDownloadURL();
+      // Await the completion of both upload tasks.
+      await pdfUploadTask;
+      await imageUploadTask;
+
+      // Get the download URL for the uploaded PDF file.
+      final String pdfDownloadUrl = await pdfStorageReference.getDownloadURL();
+      // Get the download URL for the uploaded input image.
+      final String imageDownloadUrl =
+          await imageStorageReference.getDownloadURL();
 
       Pdf pdfModel = Pdf();
       pdfModel.title = textBlocks[0];
       pdfModel.authors = authorsText;
       pdfModel.publicationDate = textBlocks[4];
       pdfModel.uid = uid;
-      pdfModel.downloadUrl = downloadUrl;
+      pdfModel.pdfDownloadUrl = pdfDownloadUrl;
+      pdfModel.imgDownloadUrl = imageDownloadUrl;
       pdfModel.dateAdded = now;
 
       pdf.doc(pdfModel.uid).set(pdfModel.toMap()).then(
@@ -270,8 +275,7 @@ class _ViewPdfState extends State<ViewPdf> {
         },
       );
     } catch (e) {
-      Fluttertoast.showToast(msg: "Error uploading PDF $e");
-      print("Error uploading PDF $e");
+      Fluttertoast.showToast(msg: "Error uploading PDF and image: $e");
     }
   }
 

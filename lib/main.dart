@@ -32,7 +32,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _checkCurrentUser() async {
-    final user = await _auth.currentUser;
+    final user = _auth.currentUser;
     setState(() {
       _user = user;
     });

@@ -5,7 +5,8 @@ class Pdf {
   String? authors;
   String? publicationDate;
   String? uid;
-  String? downloadUrl;
+  String? pdfDownloadUrl;
+  String? imgDownloadUrl;
   var dateAdded;
 
   Pdf({
@@ -13,7 +14,8 @@ class Pdf {
     this.authors,
     this.publicationDate,
     this.uid,
-    this.downloadUrl,
+    this.pdfDownloadUrl,
+    this.imgDownloadUrl,
     this.dateAdded,
   });
 
@@ -24,7 +26,8 @@ class Pdf {
       authors: map["authors"],
       publicationDate: map["publicationDate"],
       uid: map["uid"],
-      downloadUrl: map["downloadUrl"],
+      pdfDownloadUrl: map["pdfDownloadUrl"],
+      imgDownloadUrl: map["imgDownloadUrl"],
       dateAdded: map["dateAdded"],
     );
   }
@@ -35,7 +38,8 @@ class Pdf {
       "authors": authors,
       "publicationDate": publicationDate,
       "uid": uid,
-      "downloadUrl": downloadUrl,
+      "pdfDownloadUrl": pdfDownloadUrl,
+      "imgDownloadUrl": imgDownloadUrl,
       "dateAdded": dateAdded,
     };
   }
