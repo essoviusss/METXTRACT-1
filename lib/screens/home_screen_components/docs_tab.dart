@@ -1,6 +1,7 @@
 // ignore_for_file: unused_local_variable, use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/models/pdf_model.dart';
@@ -31,11 +32,16 @@ class _DocsTabState extends State<DocsTab> {
   Widget build(BuildContext context) {
     CollectionReference pdfList =
         FirebaseFirestore.instance.collection('pdfList');
+    final storageRef = FirebaseStorage.instance.ref();
     int searchCount = 0;
+
     deleteData(String id) async {
       try {
+        final pdfRef = await storageRef.child("pdfFiles").child(id).delete();
+        final thumbnailRef =
+            await storageRef.child("thumbnails").child(id).delete();
         final delData = await pdfList.doc(id).delete();
-        Fluttertoast.showToast(msg: "Data Deleted Successfully!");
+        Fluttertoast.showToast(msg: "Document Deleted Successfully!");
         Navigator.pop(context);
       } catch (e) {
         Fluttertoast.showToast(msg: "Error $e");
@@ -49,7 +55,7 @@ class _DocsTabState extends State<DocsTab> {
           'authors': author,
           'publicationDate': pubDate,
         });
-        Fluttertoast.showToast(msg: "Data Updated Successfully!");
+        Fluttertoast.showToast(msg: "Document Updated Successfully!");
         Navigator.pop(context);
       } catch (e) {
         Fluttertoast.showToast(msg: "Error $e");

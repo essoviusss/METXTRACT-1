@@ -7,6 +7,11 @@ class ColorUtils {
   static const Color darkPurple = Color(0xFF5D37BD);
 
   static List<Color> getPurplePalette() {
-    return [background, lightPurple, mediumPurple, darkPurple];
+    return [
+      background,
+      lightPurple,
+      mediumPurple,
+      darkPurple,
+    ];
   }
 }
