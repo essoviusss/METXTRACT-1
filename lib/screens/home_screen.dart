@@ -147,8 +147,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
         itemCount: iconList.length,
         tabBuilder: (int index, bool isActive) {
-          final color =
-              isActive ? ColorUtils.darkPurple : ColorUtils.lightPurple;
+          final color = isActive ? ColorUtils.darkPurple : Colors.grey;
           return Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -167,8 +166,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         splashSpeedInMilliseconds: 300,
         notchSmoothness: NotchSmoothness.defaultEdge,
         gapLocation: GapLocation.none,
-        leftCornerRadius: 32,
-        rightCornerRadius: 32,
+        leftCornerRadius: 10,
+        rightCornerRadius: 10,
         onTap: (index) {
           setState(() {
             _bottomNavIndex = index;
@@ -179,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           offset: Offset(0, 1),
           blurRadius: 12,
           spreadRadius: 0.5,
-          color: ColorUtils.darkPurple,
+          color: Colors.grey,
         ),
       ),
     );

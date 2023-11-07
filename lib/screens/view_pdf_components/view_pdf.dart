@@ -10,10 +10,14 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:metxtract/main.dart';
 import 'package:metxtract/models/pdf_model.dart';
+import 'package:metxtract/utils/color_utils.dart';
+import 'package:metxtract/utils/responsize_utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:uuid/uuid.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 class ViewPdf extends StatefulWidget {
   final Uint8List pdfBytes;
@@ -228,6 +232,51 @@ class _ViewPdfState extends State<ViewPdf> {
     final Reference imageStorageReference =
         FirebaseStorage.instance.ref().child("thumbnails").child(uid!);
 
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LoadingAnimationWidget.discreteCircle(
+                color: ColorUtils.darkPurple,
+                size: 60,
+              ),
+              SizedBox(
+                height: ResponsiveUtil.heightVar / 100,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Uploading',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  AnimatedTextKit(
+                    animatedTexts: [
+                      TypewriterAnimatedText(
+                        '.....',
+                        textStyle: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        speed: const Duration(milliseconds: 500),
+                      ),
+                    ],
+                    totalRepeatCount: 10,
+                    pause: const Duration(milliseconds: 1000),
+                    displayFullTextOnTap: true,
+                    stopPauseOnTap: true,
+                  )
+                ],
+              )
+            ],
+          ),
+        );
+      },
+    );
+
     try {
       // Upload the PDF file to Firebase Storage.
       final UploadTask pdfUploadTask =
@@ -269,12 +318,14 @@ class _ViewPdfState extends State<ViewPdf> {
 
       pdf.doc(pdfModel.uid).set(pdfModel.toMap()).then(
         (value) {
+          Navigator.pop(context); // Close the loading dialog.
           Fluttertoast.showToast(msg: "PDF uploaded successfully!");
           Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const MyApp()));
         },
       );
     } catch (e) {
+      Navigator.pop(context); // Close the loading dialog.
       Fluttertoast.showToast(msg: "Error uploading PDF and image: $e");
     }
   }

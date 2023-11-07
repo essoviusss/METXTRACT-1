@@ -1,15 +1,13 @@
 // ignore_for_file: unused_local_variable, use_build_context_synchronously
 
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/models/pdf_model.dart';
+import 'package:metxtract/screens/view_pdf_components/view_pdf_dialog.dart';
 import 'package:metxtract/utils/color_utils.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:pdfx/pdfx.dart';
 
 enum SortOption {
   alphabetically,
@@ -85,6 +83,15 @@ class _DocsTabState extends State<DocsTab> {
       );
     }
 
+    viewPDfDialog(String pdfUrl) async {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewPdfDialog(pdfUrl: pdfUrl),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Container(
         margin: EdgeInsets.only(
@@ -136,17 +143,11 @@ class _DocsTabState extends State<DocsTab> {
                           return Container();
                         }
                         int docCount = snapshot.data!.docs.length;
-                        return searchText == ""
-                            ? Text(
-                                "Total Documents: $docCount",
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              )
-                            : Text(
-                                "Search Result/s: $searchCount",
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              );
+                        return Text(
+                          "Total Documents: $docCount",
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        );
                       },
                     ),
                   ),
@@ -270,218 +271,230 @@ class _DocsTabState extends State<DocsTab> {
                             final String title2 = pdf.title ?? "";
                             final String pubDate2 = pdf.publicationDate ?? "";
                             final String authors2 = pdf.authors ?? "";
+                            final String pdfUrl = pdf.pdfDownloadUrl ?? "";
                             var dateAdded = pdf.dateAdded ?? "";
-                            return Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: Colors.transparent,
-                              ),
-                              margin: EdgeInsets.only(
-                                  bottom: ResponsiveUtil.heightVar / 80,
-                                  left: ResponsiveUtil.widthVar / 35,
-                                  right: ResponsiveUtil.widthVar / 35),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          margin: EdgeInsets.only(
-                                              right:
-                                                  ResponsiveUtil.widthVar / 20),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                title2,
-                                                style: const TextStyle(
-                                                    color: Colors.blue),
-                                              ),
-                                              Text(
-                                                "Author/s: $authors2",
-                                                style: const TextStyle(
-                                                  color: Colors.black,
-                                                  fontStyle: FontStyle.italic,
+                            return InkWell(
+                              onTap: () {
+                                viewPDfDialog(pdfUrl);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Colors.transparent,
+                                ),
+                                margin: EdgeInsets.only(
+                                    bottom: ResponsiveUtil.heightVar / 80,
+                                    left: ResponsiveUtil.widthVar / 35,
+                                    right: ResponsiveUtil.widthVar / 35),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            margin: EdgeInsets.only(
+                                                right: ResponsiveUtil.widthVar /
+                                                    20),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  title2,
+                                                  style: const TextStyle(
+                                                      color: Colors.blue),
                                                 ),
-                                                softWrap: false,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Text(
-                                                "Publication Date: $pubDate2",
-                                                style: const TextStyle(
+                                                Text(
+                                                  "Author/s: $authors2",
+                                                  style: const TextStyle(
                                                     color: Colors.black,
-                                                    fontStyle:
-                                                        FontStyle.italic),
-                                              ),
-                                            ],
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                  softWrap: false,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                Text(
+                                                  "Publication Date: $pubDate2",
+                                                  style: const TextStyle(
+                                                      color: Colors.black,
+                                                      fontStyle:
+                                                          FontStyle.italic),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Row(
-                                                  children: [
-                                                    const Expanded(
-                                                      child: Text(
-                                                          "Document Details"),
-                                                    ),
-                                                    IconButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      icon: const Icon(
-                                                        Icons.close,
-                                                        color: ColorUtils
-                                                            .darkPurple,
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                                content: SingleChildScrollView(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
+                                        IconButton(
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: Row(
                                                     children: [
-                                                      TextField(
-                                                        decoration:
-                                                            const InputDecoration(
-                                                                labelText:
-                                                                    "Title"),
-                                                        controller: titleController =
-                                                            TextEditingController(
-                                                                text: titleController!
-                                                                            .text ==
-                                                                        ""
-                                                                    ? title2
-                                                                    : titleController!
-                                                                        .text),
-                                                        readOnly: false,
-                                                        maxLines: null,
+                                                      const Expanded(
+                                                        child: Text(
+                                                            "Document Details"),
                                                       ),
-                                                      TextField(
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          labelText: "Author/s",
-                                                        ),
-                                                        controller: authorController =
-                                                            TextEditingController(
-                                                                text: authorController!
-                                                                            .text ==
-                                                                        ""
-                                                                    ? authors2
-                                                                    : authorController!
-                                                                        .text),
-                                                        readOnly: false,
-                                                        maxLines: null,
-                                                      ),
-                                                      TextField(
-                                                        decoration:
-                                                            const InputDecoration(
-                                                                labelText:
-                                                                    "Publication Date"),
-                                                        controller: pubDateController =
-                                                            TextEditingController(
-                                                                text: pubDateController!
-                                                                            .text ==
-                                                                        ""
-                                                                    ? pubDate2
-                                                                    : pubDateController!
-                                                                        .text),
-                                                        readOnly: false,
-                                                        maxLines: null,
-                                                      ),
-                                                      SizedBox(
-                                                        height: ResponsiveUtil
-                                                                .heightVar /
-                                                            80,
-                                                      ),
-                                                      Text(
-                                                          "Date Added: ${dateAdded.toDate().toString()}")
-                                                      // Add more details as needed
-                                                    ],
-                                                  ),
-                                                ),
-                                                actions: <Widget>[
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        flex: 1,
-                                                        child: Container(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          color: Colors
-                                                              .transparent,
-                                                          child: Center(
-                                                            child: TextButton(
-                                                              child: const Text(
-                                                                "Delete",
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .deepPurple),
-                                                              ),
-                                                              onPressed: () {
-                                                                deleteData(
-                                                                    pdf.uid!);
-                                                              },
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        flex: 1,
-                                                        child: Container(
+                                                      IconButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        icon: const Icon(
+                                                          Icons.close,
                                                           color: ColorUtils
                                                               .darkPurple,
-                                                          child: Center(
-                                                            child: TextButton(
-                                                              child: const Text(
-                                                                "Save",
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .white),
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  content:
+                                                      SingleChildScrollView(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        TextField(
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      "Title"),
+                                                          controller: titleController =
+                                                              TextEditingController(
+                                                                  text: titleController!
+                                                                              .text ==
+                                                                          ""
+                                                                      ? title2
+                                                                      : titleController!
+                                                                          .text),
+                                                          readOnly: false,
+                                                          maxLines: null,
+                                                        ),
+                                                        TextField(
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            labelText:
+                                                                "Author/s",
+                                                          ),
+                                                          controller: authorController =
+                                                              TextEditingController(
+                                                                  text: authorController!
+                                                                              .text ==
+                                                                          ""
+                                                                      ? authors2
+                                                                      : authorController!
+                                                                          .text),
+                                                          readOnly: false,
+                                                          maxLines: null,
+                                                        ),
+                                                        TextField(
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      "Publication Date"),
+                                                          controller: pubDateController =
+                                                              TextEditingController(
+                                                                  text: pubDateController!
+                                                                              .text ==
+                                                                          ""
+                                                                      ? pubDate2
+                                                                      : pubDateController!
+                                                                          .text),
+                                                          readOnly: false,
+                                                          maxLines: null,
+                                                        ),
+                                                        SizedBox(
+                                                          height: ResponsiveUtil
+                                                                  .heightVar /
+                                                              80,
+                                                        ),
+                                                        Text(
+                                                            "Date Added: ${dateAdded.toDate().toString()}")
+                                                        // Add more details as needed
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  actions: <Widget>[
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          flex: 1,
+                                                          child: Container(
+                                                            alignment: Alignment
+                                                                .centerLeft,
+                                                            color: Colors
+                                                                .transparent,
+                                                            child: Center(
+                                                              child: TextButton(
+                                                                child:
+                                                                    const Text(
+                                                                  "Delete",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .deepPurple),
+                                                                ),
+                                                                onPressed: () {
+                                                                  deleteData(
+                                                                      pdf.uid!);
+                                                                },
                                                               ),
-                                                              onPressed: () {
-                                                                editData(
-                                                                    pdf.uid!,
-                                                                    titleController!
-                                                                        .text,
-                                                                    authorController!
-                                                                        .text,
-                                                                    pubDateController!
-                                                                        .text);
-                                                              },
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  )
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: ColorUtils.darkPurple,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  Divider(
-                                    height: ResponsiveUtil.heightVar / 80,
-                                  )
-                                ],
+                                                        Expanded(
+                                                          flex: 1,
+                                                          child: Container(
+                                                            color: ColorUtils
+                                                                .darkPurple,
+                                                            child: Center(
+                                                              child: TextButton(
+                                                                child:
+                                                                    const Text(
+                                                                  "Save",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .white),
+                                                                ),
+                                                                onPressed: () {
+                                                                  editData(
+                                                                      pdf.uid!,
+                                                                      titleController!
+                                                                          .text,
+                                                                      authorController!
+                                                                          .text,
+                                                                      pubDateController!
+                                                                          .text);
+                                                                },
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    )
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          icon: const Icon(
+                                            Icons.edit,
+                                            color: ColorUtils.darkPurple,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    Divider(
+                                      height: ResponsiveUtil.heightVar / 80,
+                                    )
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -508,7 +521,7 @@ class _DocsTabState extends State<DocsTab> {
                               final title1 = pdf.title ?? "";
                               final pubDate1 = pdf.publicationDate ?? "";
                               final authors1 = pdf.authors ?? "";
-
+                              final String pdfUrl = pdf.pdfDownloadUrl ?? "";
                               // Initialize TextEditingController for this document if it doesn't exist
                               if (!textEditingControllerMap
                                   .containsKey(documentId)) {
@@ -531,212 +544,218 @@ class _DocsTabState extends State<DocsTab> {
 
                               var dateAdded = pdf.dateAdded ?? "";
 
-                              return Card(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      width: 1.5,
-                                      color: Colors.grey.shade300,
+                              return InkWell(
+                                onTap: () {
+                                  viewPDfDialog(pdfUrl);
+                                },
+                                child: Card(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        width: 1.5,
+                                        color: Colors.grey.shade300,
+                                      ),
+                                      borderRadius: BorderRadius.circular(5.0),
                                     ),
-                                    borderRadius: BorderRadius.circular(5.0),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(5.0),
-                                          child: Image.network(
-                                            imageUrl,
-                                            fit: BoxFit.fitWidth,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(5.0),
+                                            child: Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.fitWidth,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                title2,
-                                                style: const TextStyle(
-                                                    fontSize: 8),
-                                                softWrap: false,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  title2,
+                                                  style: const TextStyle(
+                                                      fontSize: 8),
+                                                  softWrap: false,
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          IconButton(
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    title: Row(
-                                                      children: [
-                                                        const Expanded(
-                                                          child: Text(
-                                                              "Document Details"),
-                                                        ),
-                                                        IconButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          icon: const Icon(
-                                                            Icons.close,
-                                                            color: ColorUtils
-                                                                .darkPurple,
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    content:
-                                                        SingleChildScrollView(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
+                                            IconButton(
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: Row(
                                                         children: [
-                                                          TextField(
-                                                            decoration:
-                                                                const InputDecoration(
-                                                                    labelText:
-                                                                        "Title"),
-                                                            controller: titleController =
-                                                                TextEditingController(
-                                                                    text: titleController!.text ==
-                                                                            ""
-                                                                        ? title2
-                                                                        : titleController!
-                                                                            .text),
-                                                            readOnly: false,
-                                                            maxLines: null,
+                                                          const Expanded(
+                                                            child: Text(
+                                                                "Document Details"),
                                                           ),
-                                                          TextField(
-                                                            decoration:
-                                                                const InputDecoration(
-                                                              labelText:
-                                                                  "Author/s",
-                                                            ),
-                                                            controller: authorController =
-                                                                TextEditingController(
-                                                                    text: authorController!.text ==
-                                                                            ""
-                                                                        ? authors2
-                                                                        : authorController!
-                                                                            .text),
-                                                            readOnly: false,
-                                                            maxLines: null,
-                                                          ),
-                                                          TextField(
-                                                            decoration:
-                                                                const InputDecoration(
-                                                                    labelText:
-                                                                        "Publication Date"),
-                                                            controller: pubDateController =
-                                                                TextEditingController(
-                                                                    text: pubDateController!.text ==
-                                                                            ""
-                                                                        ? pubDate2
-                                                                        : pubDateController!
-                                                                            .text),
-                                                            readOnly: false,
-                                                            maxLines: null,
-                                                          ),
-                                                          SizedBox(
-                                                            height: ResponsiveUtil
-                                                                    .heightVar /
-                                                                80,
-                                                          ),
-                                                          Text(
-                                                              "Date Added: ${dateAdded.toDate().toString()}")
-                                                          // Add more details as needed
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    actions: <Widget>[
-                                                      Row(
-                                                        children: [
-                                                          Expanded(
-                                                            flex: 1,
-                                                            child: Container(
-                                                              alignment: Alignment
-                                                                  .centerLeft,
-                                                              color: Colors
-                                                                  .transparent,
-                                                              child: Center(
-                                                                child:
-                                                                    TextButton(
-                                                                  child:
-                                                                      const Text(
-                                                                    "Delete",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .deepPurple),
-                                                                  ),
-                                                                  onPressed:
-                                                                      () {
-                                                                    deleteData(
-                                                                        pdf.uid!);
-                                                                  },
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          Expanded(
-                                                            flex: 1,
-                                                            child: Container(
+                                                          IconButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            icon: const Icon(
+                                                              Icons.close,
                                                               color: ColorUtils
                                                                   .darkPurple,
-                                                              child: Center(
-                                                                child:
-                                                                    TextButton(
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      content:
+                                                          SingleChildScrollView(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            TextField(
+                                                              decoration:
+                                                                  const InputDecoration(
+                                                                      labelText:
+                                                                          "Title"),
+                                                              controller: titleController = TextEditingController(
+                                                                  text: titleController!
+                                                                              .text ==
+                                                                          ""
+                                                                      ? title2
+                                                                      : titleController!
+                                                                          .text),
+                                                              readOnly: false,
+                                                              maxLines: null,
+                                                            ),
+                                                            TextField(
+                                                              decoration:
+                                                                  const InputDecoration(
+                                                                labelText:
+                                                                    "Author/s",
+                                                              ),
+                                                              controller: authorController = TextEditingController(
+                                                                  text: authorController!
+                                                                              .text ==
+                                                                          ""
+                                                                      ? authors2
+                                                                      : authorController!
+                                                                          .text),
+                                                              readOnly: false,
+                                                              maxLines: null,
+                                                            ),
+                                                            TextField(
+                                                              decoration:
+                                                                  const InputDecoration(
+                                                                      labelText:
+                                                                          "Publication Date"),
+                                                              controller: pubDateController = TextEditingController(
+                                                                  text: pubDateController!
+                                                                              .text ==
+                                                                          ""
+                                                                      ? pubDate2
+                                                                      : pubDateController!
+                                                                          .text),
+                                                              readOnly: false,
+                                                              maxLines: null,
+                                                            ),
+                                                            SizedBox(
+                                                              height: ResponsiveUtil
+                                                                      .heightVar /
+                                                                  80,
+                                                            ),
+                                                            Text(
+                                                                "Date Added: ${dateAdded.toDate().toString()}")
+                                                            // Add more details as needed
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      actions: <Widget>[
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              flex: 1,
+                                                              child: Container(
+                                                                alignment: Alignment
+                                                                    .centerLeft,
+                                                                color: Colors
+                                                                    .transparent,
+                                                                child: Center(
                                                                   child:
-                                                                      const Text(
-                                                                    "Save",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .white),
+                                                                      TextButton(
+                                                                    child:
+                                                                        const Text(
+                                                                      "Delete",
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.deepPurple),
+                                                                    ),
+                                                                    onPressed:
+                                                                        () {
+                                                                      deleteData(
+                                                                          pdf.uid!);
+                                                                    },
                                                                   ),
-                                                                  onPressed:
-                                                                      () {
-                                                                    editData(
-                                                                        pdf
-                                                                            .uid!,
-                                                                        titleController!
-                                                                            .text,
-                                                                        authorController!
-                                                                            .text,
-                                                                        pubDateController!
-                                                                            .text);
-                                                                  },
                                                                 ),
                                                               ),
                                                             ),
-                                                          ),
-                                                        ],
-                                                      )
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            },
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: ColorUtils.darkPurple,
-                                            ),
-                                          )
-                                        ],
-                                      )
-                                    ],
+                                                            Expanded(
+                                                              flex: 1,
+                                                              child: Container(
+                                                                color: ColorUtils
+                                                                    .darkPurple,
+                                                                child: Center(
+                                                                  child:
+                                                                      TextButton(
+                                                                    child:
+                                                                        const Text(
+                                                                      "Save",
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.white),
+                                                                    ),
+                                                                    onPressed:
+                                                                        () {
+                                                                      editData(
+                                                                          pdf
+                                                                              .uid!,
+                                                                          titleController!
+                                                                              .text,
+                                                                          authorController!
+                                                                              .text,
+                                                                          pubDateController!
+                                                                              .text);
+                                                                    },
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                color: ColorUtils.darkPurple,
+                                              ),
+                                            )
+                                          ],
+                                        )
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
