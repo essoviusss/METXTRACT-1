@@ -4,20 +4,20 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:metxtract/main.dart';
 import 'package:metxtract/models/pdf_model.dart';
+import 'package:metxtract/screens/home_screen.dart';
 import 'package:metxtract/utils/color_utils.dart';
+import 'package:metxtract/utils/loading_dialog.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:uuid/uuid.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 
 class ViewPdf extends StatefulWidget {
   final Uint8List pdfBytes;
@@ -40,6 +40,7 @@ class _ViewPdfState extends State<ViewPdf> {
   final List<String> textBlocks = [];
   String? authorsText;
   var now = DateTime.now();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   getImage() async {
     final document = await PdfDocument.openData(widget.pdfBytes);
@@ -100,31 +101,70 @@ class _ViewPdfState extends State<ViewPdf> {
         // Split the author names by line breaks and join them with commas
         final List<String> authorLines = textBlocks[1].split('\n');
         authorsText = authorLines.join(', ');
-
+        final sContext = scaffoldKey.currentState?.context;
         showDialog<void>(
-          context: context,
+          context: sContext!,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text('Recognized Text Blocks'),
+              titlePadding: EdgeInsets.zero,
+              title: Container(
+                decoration: const BoxDecoration(
+                  color: ColorUtils.darkPurple,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25.0),
+                    topRight: Radius.circular(25.0),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      top: ResponsiveUtil.heightVar / 70,
+                      bottom: ResponsiveUtil.heightVar / 70),
+                  child: const Center(
+                    child: Text(
+                      "Recognized Text",
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
-                      decoration: const InputDecoration(labelText: "Title"),
+                      decoration: const InputDecoration(
+                        labelText: "Title",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 25,
+                        ),
+                      ),
                       controller: TextEditingController(text: textBlocks[0]),
                       readOnly: false,
                       maxLines: null,
                     ),
                     TextField(
-                      decoration: const InputDecoration(labelText: "Author/s"),
+                      decoration: const InputDecoration(
+                        labelText: "Author/s",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 25,
+                        ),
+                      ),
                       controller: TextEditingController(text: authorsText),
                       readOnly: false,
                       maxLines: null,
                     ),
                     TextField(
-                      decoration:
-                          const InputDecoration(labelText: "Publication Date"),
+                      decoration: const InputDecoration(
+                        labelText: "Publication Date",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 25,
+                        ),
+                      ),
                       controller: TextEditingController(text: textBlocks[4]),
                       readOnly: false,
                     ),
@@ -132,21 +172,31 @@ class _ViewPdfState extends State<ViewPdf> {
                 ),
               ),
               actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    uploadFiles();
-                  },
-                  child: const Text('Upload PDF'),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          ColorUtils.darkPurple),
+                    ),
+                    onPressed: () {
+                      uploadFiles();
+                    },
+                    child: const Text(
+                      "Upload PDF",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
               ],
             );
           },
         );
       } else {
-        print("Input image is null");
+        Fluttertoast.showToast(msg: "Input image is null");
       }
     } catch (e) {
-      print("Error during text recognition: $e");
+      Fluttertoast.showToast(msg: "Error during text recognition: $e");
     }
   }
 
@@ -157,9 +207,6 @@ class _ViewPdfState extends State<ViewPdf> {
     }
 
     final Uint8List imageData = pdfPageImage.bytes;
-
-    // Verify the format of the image
-    print("Image format: ${pdfPageImage.format}");
 
     // Determine the format based on the actual image format
     InputImageFormat inputImageFormat;
@@ -200,18 +247,45 @@ class _ViewPdfState extends State<ViewPdf> {
       Fluttertoast.showToast(msg: "No Image Found!");
       return;
     }
-
+    final sContext = scaffoldKey.currentState?.context;
     await showDialog<void>(
-      context: context,
+      context: sContext!,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: ColorUtils.background,
           content: Image.memory(image.bytes),
           actions: <Widget>[
-            TextButton(
-              onPressed: () async {
-                scanText();
-              },
-              child: Text('Scan'),
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: TextButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: ColorUtils.darkPurple),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: TextButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          ColorUtils.darkPurple),
+                    ),
+                    onPressed: () async {
+                      scanText();
+                    },
+                    child: const Text(
+                      'Scan Text',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -231,79 +305,24 @@ class _ViewPdfState extends State<ViewPdf> {
         FirebaseStorage.instance.ref().child("pdfFiles").child(uid!);
     final Reference imageStorageReference =
         FirebaseStorage.instance.ref().child("thumbnails").child(uid!);
+    final sContext = scaffoldKey.currentState?.context;
 
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LoadingAnimationWidget.discreteCircle(
-                color: ColorUtils.darkPurple,
-                size: 60,
-              ),
-              SizedBox(
-                height: ResponsiveUtil.heightVar / 100,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Uploading',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  AnimatedTextKit(
-                    animatedTexts: [
-                      TypewriterAnimatedText(
-                        '.....',
-                        textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        speed: const Duration(milliseconds: 500),
-                      ),
-                    ],
-                    totalRepeatCount: 10,
-                    pause: const Duration(milliseconds: 1000),
-                    displayFullTextOnTap: true,
-                    stopPauseOnTap: true,
-                  )
-                ],
-              )
-            ],
-          ),
-        );
-      },
-    );
+    LoadingDialog.showLoadingDialog(context, 'Uploading');
 
     try {
-      // Upload the PDF file to Firebase Storage.
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+
       final UploadTask pdfUploadTask =
           pdfStorageReference.putData(Uint8List.fromList(widget.pdfBytes));
 
-      // Upload the input image to Firebase Storage.
       final UploadTask imageUploadTask =
           imageStorageReference.putData(Uint8List.fromList(inputImage!.bytes!));
 
-      // Monitor the upload progress for both tasks.
-      pdfUploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        print(
-            'PDF Upload Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%');
-      });
-
-      imageUploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        print(
-            'Image Upload Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%');
-      });
-
-      // Await the completion of both upload tasks.
       await pdfUploadTask;
       await imageUploadTask;
 
-      // Get the download URL for the uploaded PDF file.
       final String pdfDownloadUrl = await pdfStorageReference.getDownloadURL();
-      // Get the download URL for the uploaded input image.
+
       final String imageDownloadUrl =
           await imageStorageReference.getDownloadURL();
 
@@ -312,20 +331,21 @@ class _ViewPdfState extends State<ViewPdf> {
       pdfModel.authors = authorsText;
       pdfModel.publicationDate = textBlocks[4];
       pdfModel.uid = uid;
+      pdfModel.userId = userId;
       pdfModel.pdfDownloadUrl = pdfDownloadUrl;
       pdfModel.imgDownloadUrl = imageDownloadUrl;
       pdfModel.dateAdded = now;
 
-      pdf.doc(pdfModel.uid).set(pdfModel.toMap()).then(
-        (value) {
-          Navigator.pop(context); // Close the loading dialog.
-          Fluttertoast.showToast(msg: "PDF uploaded successfully!");
-          Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const MyApp()));
-        },
-      );
+      final upload = await pdf.doc(pdfModel.uid).set(pdfModel.toMap());
+      Fluttertoast.showToast(msg: "PDF uploaded successfully!");
+      scaffoldKey.currentState?.closeDrawer();
+      Navigator.pop(context);
+      Navigator.pop(context);
+
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()));
     } catch (e) {
-      Navigator.pop(context); // Close the loading dialog.
+      Navigator.pop(context);
       Fluttertoast.showToast(msg: "Error uploading PDF and image: $e");
     }
   }
@@ -333,6 +353,7 @@ class _ViewPdfState extends State<ViewPdf> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         title: const Text('PDF Preview'),
       ),
@@ -340,19 +361,22 @@ class _ViewPdfState extends State<ViewPdf> {
         widget.pdfBytes,
         key: GlobalKey<SfPdfViewerState>(),
       ),
-      floatingActionButton: ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+      persistentFooterButtons: [
+        ElevatedButton(
+          style: ButtonStyle(
+            backgroundColor:
+                MaterialStateProperty.all<Color>(ColorUtils.darkPurple),
+          ),
+          onPressed: () async {
+            final image = await getImage();
+            showImageDialog(image);
+          },
+          child: const Text(
+            'Scan PDF',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
-        onPressed: () async {
-          final image = await getImage();
-          showImageDialog(image);
-        },
-        child: const Text(
-          'Scan PDF',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
+      ],
     );
   }
 }

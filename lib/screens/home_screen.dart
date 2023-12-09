@@ -8,12 +8,14 @@ import 'package:circular_reveal_animation/circular_reveal_animation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/screens/home_screen_components/docs_tab.dart';
 import 'package:metxtract/screens/home_screen_components/home_tab.dart';
 import 'package:metxtract/screens/home_screen_components/notifications_tab.dart';
 import 'package:metxtract/screens/home_screen_components/profile_tab.dart';
 import 'package:metxtract/screens/signin_screen.dart';
 import 'package:metxtract/utils/color_utils.dart';
+import 'package:metxtract/utils/loading_dialog.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -50,9 +52,89 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   ];
 
   signOut() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const SignIn()));
+    LoadingDialog.showLoadingDialog(context, "Signing out");
+    try {
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SignIn(),
+        ),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Error $e");
+    }
+  }
+
+  signOutConfirmation() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          titlePadding: EdgeInsets.zero,
+          title: Container(
+            decoration: const BoxDecoration(
+              color: ColorUtils.darkPurple,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25.0),
+                topRight: Radius.circular(25.0),
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(
+                  top: ResponsiveUtil.heightVar / 70,
+                  bottom: ResponsiveUtil.heightVar / 70),
+              child: const Center(
+                child: Text(
+                  "Sign Out",
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          content: const Text(
+            "Are you sure you want to sign out?",
+            style: TextStyle(fontSize: 20),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      "No",
+                      style: TextStyle(color: ColorUtils.darkPurple),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: TextButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          ColorUtils.darkPurple),
+                    ),
+                    onPressed: () {
+                      signOut();
+                    },
+                    child: const Text(
+                      "Yes",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -122,16 +204,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         backgroundColor: ColorUtils.darkPurple,
         title: const Text(
           "METXTRACT",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        leading: Image.asset(
+          "assets/images/4.png",
+          height: 2,
+          width: 2,
+        ),
         actions: [
           Container(
               margin: EdgeInsets.only(right: ResponsiveUtil.widthVar / 35),
               child: IconButton(
                 onPressed: () {
-                  signOut();
+                  signOutConfirmation();
                 },
                 icon: const Icon(
                   Icons.logout,

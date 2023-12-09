@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:metxtract/screens/home_screen.dart';
 import 'package:metxtract/screens/splash_screen.dart';
+import 'package:metxtract/utils/color_utils.dart';
 import 'config/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -44,7 +46,14 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+        textTheme:
+            GoogleFonts.latoTextTheme(Typography.blackCupertino).copyWith(
+          bodySmall: GoogleFonts.poppins(),
+        ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.grey,
+          background: ColorUtils.background,
+        ),
         useMaterial3: true,
       ),
       home: _user == null ? const SplashScreen() : const HomeScreen(),

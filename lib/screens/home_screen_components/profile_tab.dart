@@ -10,9 +10,9 @@ class ProfileTab extends StatefulWidget {
 class _ProfileTabState extends State<ProfileTab> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text("Profile Tab"),
+        child: Image.asset("assets/images/Maintenance.png"),
       ),
     );
   }

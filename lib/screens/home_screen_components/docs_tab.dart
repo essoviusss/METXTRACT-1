@@ -1,14 +1,18 @@
-// ignore_for_file: unused_local_variable, use_build_context_synchronously
+// ignore_for_file: unused_local_variable, use_build_context_synchronously, use_key_in_widget_constructors
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/models/pdf_model.dart';
+import 'package:metxtract/screens/home_screen.dart';
 import 'package:metxtract/screens/view_pdf_components/view_pdf_dialog.dart';
 import 'package:metxtract/utils/color_utils.dart';
+import 'package:metxtract/utils/loading_dialog.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'dart:math' as math;
 
 enum SortOption {
   alphabetically,
@@ -27,28 +31,45 @@ class _DocsTabState extends State<DocsTab> {
   Map<String, TextEditingController> textEditingControllerMap = {};
   SortOption currentSortOption = SortOption.alphabetically;
   bool isList = true;
+  int? count;
+  bool isAscending = true;
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    scaffoldKey;
+  }
 
   @override
   Widget build(BuildContext context) {
     CollectionReference pdfList =
         FirebaseFirestore.instance.collection('pdfList');
     final storageRef = FirebaseStorage.instance.ref();
-    int searchCount = 0;
+
+    final formKey = GlobalKey<FormState>();
 
     deleteData(String id) async {
+      LoadingDialog.showLoadingDialog(context, 'Deleting');
       try {
         final pdfRef = await storageRef.child("pdfFiles").child(id).delete();
         final thumbnailRef =
             await storageRef.child("thumbnails").child(id).delete();
         final delData = await pdfList.doc(id).delete();
         Fluttertoast.showToast(msg: "Document Deleted Successfully!");
+        scaffoldKey.currentState?.closeDrawer();
         Navigator.pop(context);
+        Navigator.pop(context);
+
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()));
       } catch (e) {
         Fluttertoast.showToast(msg: "Error $e");
       }
     }
 
     editData(String id, title, author, pubDate) async {
+      LoadingDialog.showLoadingDialog(context, 'Updating');
       try {
         final edtData = await pdfList.doc(id).update({
           'title': title,
@@ -56,18 +77,304 @@ class _DocsTabState extends State<DocsTab> {
           'publicationDate': pubDate,
         });
         Fluttertoast.showToast(msg: "Document Updated Successfully!");
+        scaffoldKey.currentState?.closeDrawer();
         Navigator.pop(context);
+        Navigator.pop(context);
+
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()));
       } catch (e) {
         Fluttertoast.showToast(msg: "Error $e");
       }
     }
 
+    deleteConfirmation(String uid) async {
+      final sContext = scaffoldKey.currentState?.context;
+      showDialog(
+        context: sContext!,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            titlePadding: EdgeInsets.zero,
+            title: Container(
+              decoration: const BoxDecoration(
+                color: ColorUtils.darkPurple,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25.0),
+                  topRight: Radius.circular(25.0),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                    top: ResponsiveUtil.heightVar / 70,
+                    bottom: ResponsiveUtil.heightVar / 70),
+                child: const Center(
+                  child: Text(
+                    "Delete Document",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            content: const Text(
+              "Are you sure you want to delete this document?",
+              style: TextStyle(fontSize: 20),
+            ),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "No",
+                        style: TextStyle(color: ColorUtils.darkPurple),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: TextButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            ColorUtils.darkPurple),
+                      ),
+                      onPressed: () {
+                        deleteData(uid);
+                      },
+                      child: const Text(
+                        "Yes",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    editConfirmation(String id, title, author, pubDate) async {
+      final sContext = scaffoldKey.currentState?.context;
+      showDialog(
+        context: sContext!,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            titlePadding: EdgeInsets.zero,
+            title: Container(
+              decoration: const BoxDecoration(
+                color: ColorUtils.darkPurple,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25.0),
+                  topRight: Radius.circular(25.0),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                    top: ResponsiveUtil.heightVar / 70,
+                    bottom: ResponsiveUtil.heightVar / 70),
+                child: const Center(
+                  child: Text(
+                    "Update Document",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            content: const Text(
+              "Are you sure you want to update this document?",
+              style: TextStyle(fontSize: 20),
+            ),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "No",
+                        style: TextStyle(color: ColorUtils.darkPurple),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: TextButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            ColorUtils.darkPurple),
+                      ),
+                      onPressed: () {
+                        editData(id, title, author, pubDate);
+                      },
+                      child: const Text(
+                        "Yes",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    editDeleteDialog(TextEditingController? titleController, authorController,
+        pubDateController, String? title2, authors2, pubDate2, uid) async {
+      final sContext = scaffoldKey.currentState?.context;
+      showDialog(
+        context: sContext!,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            titlePadding: EdgeInsets.zero,
+            title: Container(
+              decoration: const BoxDecoration(
+                color: ColorUtils.darkPurple,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25.0),
+                  topRight: Radius.circular(25.0),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                    top: ResponsiveUtil.heightVar / 70,
+                    bottom: ResponsiveUtil.heightVar / 70),
+                child: const Center(
+                  child: Text(
+                    "Document Details",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Title:",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      ),
+                    ),
+                    controller: titleController = TextEditingController(
+                        text: titleController?.text == ""
+                            ? title2
+                            : titleController?.text),
+                    readOnly: false,
+                    maxLines: null,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Author/s",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      ),
+                    ),
+                    controller: authorController = TextEditingController(
+                        text: authorController!.text == ""
+                            ? authors2
+                            : authorController!.text),
+                    readOnly: false,
+                    maxLines: null,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Publication Date",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      ),
+                    ),
+                    controller: pubDateController = TextEditingController(
+                        text: pubDateController!.text == ""
+                            ? pubDate2
+                            : pubDateController!.text),
+                    readOnly: false,
+                    maxLines: null,
+                  ),
+                  SizedBox(
+                    height: ResponsiveUtil.heightVar / 80,
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      alignment: Alignment.centerLeft,
+                      color: Colors.transparent,
+                      child: Center(
+                        child: TextButton(
+                          child: const Text(
+                            "Delete",
+                            style: TextStyle(color: ColorUtils.darkPurple),
+                          ),
+                          onPressed: () {
+                            deleteConfirmation(uid);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      color: ColorUtils.darkPurple,
+                      child: Center(
+                        child: TextButton(
+                          child: const Text(
+                            "Save",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onPressed: () {
+                            editConfirmation(uid, titleController?.text,
+                                authorController.text, pubDateController.text);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          );
+        },
+      );
+    }
+
     void sortData(List<Pdf> data) {
       data.sort((a, b) {
         if (currentSortOption == SortOption.alphabetically) {
-          return a.title!.compareTo(b.title!);
+          return isAscending
+              ? a.title!.compareTo(b.title!)
+              : b.title!.compareTo(a.title!);
         } else if (currentSortOption == SortOption.dateAdded) {
-          return b.dateAdded!.compareTo(a.dateAdded!);
+          return isAscending
+              ? b.dateAdded!.compareTo(a.dateAdded!)
+              : a.dateAdded!.compareTo(b.dateAdded!);
         }
         return 0;
       });
@@ -77,7 +384,12 @@ class _DocsTabState extends State<DocsTab> {
       return IconButton(
         onPressed: () {
           setState(() {
-            currentSortOption = option;
+            if (currentSortOption == option) {
+              isAscending = !isAscending;
+            } else {
+              currentSortOption = option;
+              isAscending = true;
+            }
           });
         },
         style: ButtonStyle(
@@ -85,7 +397,14 @@ class _DocsTabState extends State<DocsTab> {
             currentSortOption == option ? ColorUtils.darkPurple : Colors.grey,
           ),
         ),
-        icon: currentSortOption == SortOption.alphabetically ? icon : icon,
+        icon: currentSortOption == option
+            ? isAscending
+                ? icon
+                : Transform.rotate(
+                    angle: -math.pi,
+                    child: icon,
+                  )
+            : icon,
       );
     }
 
@@ -99,6 +418,7 @@ class _DocsTabState extends State<DocsTab> {
     }
 
     return Scaffold(
+      key: scaffoldKey,
       body: Container(
         margin: EdgeInsets.only(
             left: ResponsiveUtil.widthVar / 50,
@@ -144,16 +464,25 @@ class _DocsTabState extends State<DocsTab> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return Container();
-                        }
-                        if (!snapshot.hasData) {
+                        } else if (!snapshot.hasData) {
                           return Container();
+                        } else {
+                          List<Pdf> pdfList = snapshot.data!.docs.map((doc) {
+                            return Pdf.fromMap(doc.data());
+                          }).toList();
+                          String? userId =
+                              FirebaseAuth.instance.currentUser?.uid;
+                          final filteredCount = pdfList.where((pdf) {
+                            final currentUserUid = userId;
+                            return pdf.userId == currentUserUid;
+                          }).toList();
+                          int pdfCount = filteredCount.length;
+                          return Text(
+                            "Total Documents: $pdfCount",
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          );
                         }
-                        int docCount = snapshot.data!.docs.length;
-                        return Text(
-                          "Total Documents: $docCount",
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        );
                       },
                     ),
                   ),
@@ -232,22 +561,23 @@ class _DocsTabState extends State<DocsTab> {
                   List<Pdf> pdfList = snapshot.data!.docs.map((doc) {
                     return Pdf.fromMap(doc.data());
                   }).toList();
-
+                  String? userId = FirebaseAuth.instance.currentUser?.uid;
                   final filteredDocs = pdfList.where((pdf) {
                     final title1 = pdf.title ?? "";
                     final pubDate1 = pdf.publicationDate ?? "";
                     final authors1 = pdf.authors ?? "";
-                    return title1
-                            .toLowerCase()
-                            .contains(searchText.toLowerCase()) ||
-                        pubDate1
-                            .toLowerCase()
-                            .contains(searchText.toLowerCase()) ||
-                        authors1
-                            .toLowerCase()
-                            .contains(searchText.toLowerCase());
+                    final currentUserUid = userId;
+                    return (title1
+                                .toLowerCase()
+                                .contains(searchText.toLowerCase()) ||
+                            pubDate1
+                                .toLowerCase()
+                                .contains(searchText.toLowerCase()) ||
+                            authors1
+                                .toLowerCase()
+                                .contains(searchText.toLowerCase())) &&
+                        pdf.userId == currentUserUid;
                   }).toList();
-
                   sortData(filteredDocs);
                   return isList == true
                       ? ListView.builder(
@@ -278,6 +608,7 @@ class _DocsTabState extends State<DocsTab> {
                             final String pubDate2 = pdf.publicationDate ?? "";
                             final String authors2 = pdf.authors ?? "";
                             final String pdfUrl = pdf.pdfDownloadUrl ?? "";
+                            final String uid = pdf.uid ?? "";
                             var dateAdded = pdf.dateAdded ?? "";
                             return InkWell(
                               onTap: () {
@@ -310,7 +641,8 @@ class _DocsTabState extends State<DocsTab> {
                                                 Text(
                                                   title2,
                                                   style: const TextStyle(
-                                                      color: Colors.blue),
+                                                    color: ColorUtils.docText,
+                                                  ),
                                                 ),
                                                 Text(
                                                   "Author/s: $authors2",
@@ -335,158 +667,14 @@ class _DocsTabState extends State<DocsTab> {
                                         ),
                                         IconButton(
                                           onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title: Row(
-                                                    children: [
-                                                      const Expanded(
-                                                        child: Text(
-                                                            "Document Details"),
-                                                      ),
-                                                      IconButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        icon: const Icon(
-                                                          Icons.close,
-                                                          color: ColorUtils
-                                                              .darkPurple,
-                                                        ),
-                                                      )
-                                                    ],
-                                                  ),
-                                                  content:
-                                                      SingleChildScrollView(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        TextField(
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                  labelText:
-                                                                      "Title"),
-                                                          controller: titleController =
-                                                              TextEditingController(
-                                                                  text: titleController!
-                                                                              .text ==
-                                                                          ""
-                                                                      ? title2
-                                                                      : titleController!
-                                                                          .text),
-                                                          readOnly: false,
-                                                          maxLines: null,
-                                                        ),
-                                                        TextField(
-                                                          decoration:
-                                                              const InputDecoration(
-                                                            labelText:
-                                                                "Author/s",
-                                                          ),
-                                                          controller: authorController =
-                                                              TextEditingController(
-                                                                  text: authorController!
-                                                                              .text ==
-                                                                          ""
-                                                                      ? authors2
-                                                                      : authorController!
-                                                                          .text),
-                                                          readOnly: false,
-                                                          maxLines: null,
-                                                        ),
-                                                        TextField(
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                  labelText:
-                                                                      "Publication Date"),
-                                                          controller: pubDateController =
-                                                              TextEditingController(
-                                                                  text: pubDateController!
-                                                                              .text ==
-                                                                          ""
-                                                                      ? pubDate2
-                                                                      : pubDateController!
-                                                                          .text),
-                                                          readOnly: false,
-                                                          maxLines: null,
-                                                        ),
-                                                        SizedBox(
-                                                          height: ResponsiveUtil
-                                                                  .heightVar /
-                                                              80,
-                                                        ),
-                                                        Text(
-                                                            "Date Added: ${dateAdded.toDate().toString()}")
-                                                        // Add more details as needed
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  actions: <Widget>[
-                                                    Row(
-                                                      children: [
-                                                        Expanded(
-                                                          flex: 1,
-                                                          child: Container(
-                                                            alignment: Alignment
-                                                                .centerLeft,
-                                                            color: Colors
-                                                                .transparent,
-                                                            child: Center(
-                                                              child: TextButton(
-                                                                child:
-                                                                    const Text(
-                                                                  "Delete",
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .deepPurple),
-                                                                ),
-                                                                onPressed: () {
-                                                                  deleteData(
-                                                                      pdf.uid!);
-                                                                },
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          flex: 1,
-                                                          child: Container(
-                                                            color: ColorUtils
-                                                                .darkPurple,
-                                                            child: Center(
-                                                              child: TextButton(
-                                                                child:
-                                                                    const Text(
-                                                                  "Save",
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .white),
-                                                                ),
-                                                                onPressed: () {
-                                                                  editData(
-                                                                      pdf.uid!,
-                                                                      titleController!
-                                                                          .text,
-                                                                      authorController!
-                                                                          .text,
-                                                                      pubDateController!
-                                                                          .text);
-                                                                },
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    )
-                                                  ],
-                                                );
-                                              },
+                                            editDeleteDialog(
+                                              titleController,
+                                              authorController,
+                                              pubDateController,
+                                              title2,
+                                              authors2,
+                                              pubDate2,
+                                              uid,
                                             );
                                           },
                                           icon: const Icon(
@@ -547,7 +735,7 @@ class _DocsTabState extends State<DocsTab> {
                               final String pubDate2 = pdf.publicationDate ?? "";
                               final String authors2 = pdf.authors ?? "";
                               final String imageUrl = pdf.imgDownloadUrl ?? "";
-
+                              final String uid = pdf.uid ?? "";
                               var dateAdded = pdf.dateAdded ?? "";
 
                               return InkWell(
@@ -574,6 +762,20 @@ class _DocsTabState extends State<DocsTab> {
                                             child: Image.network(
                                               imageUrl,
                                               fit: BoxFit.fitWidth,
+                                              loadingBuilder:
+                                                  (BuildContext context,
+                                                      Widget child,
+                                                      ImageChunkEvent?
+                                                          loadingProgress) {
+                                                if (loadingProgress == null) {
+                                                  return child;
+                                                } else {
+                                                  return const Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  );
+                                                }
+                                              },
                                             ),
                                           ),
                                         ),
@@ -586,7 +788,9 @@ class _DocsTabState extends State<DocsTab> {
                                                 child: Text(
                                                   title2,
                                                   style: const TextStyle(
-                                                      fontSize: 8),
+                                                    fontSize: 8,
+                                                    color: ColorUtils.docText,
+                                                  ),
                                                   softWrap: false,
                                                   maxLines: 2,
                                                   overflow:
@@ -596,161 +800,14 @@ class _DocsTabState extends State<DocsTab> {
                                             ),
                                             IconButton(
                                               onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title: Row(
-                                                        children: [
-                                                          const Expanded(
-                                                            child: Text(
-                                                                "Document Details"),
-                                                          ),
-                                                          IconButton(
-                                                            onPressed: () {
-                                                              Navigator.pop(
-                                                                  context);
-                                                            },
-                                                            icon: const Icon(
-                                                              Icons.close,
-                                                              color: ColorUtils
-                                                                  .darkPurple,
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      content:
-                                                          SingleChildScrollView(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            TextField(
-                                                              decoration:
-                                                                  const InputDecoration(
-                                                                      labelText:
-                                                                          "Title"),
-                                                              controller: titleController = TextEditingController(
-                                                                  text: titleController!
-                                                                              .text ==
-                                                                          ""
-                                                                      ? title2
-                                                                      : titleController!
-                                                                          .text),
-                                                              readOnly: false,
-                                                              maxLines: null,
-                                                            ),
-                                                            TextField(
-                                                              decoration:
-                                                                  const InputDecoration(
-                                                                labelText:
-                                                                    "Author/s",
-                                                              ),
-                                                              controller: authorController = TextEditingController(
-                                                                  text: authorController!
-                                                                              .text ==
-                                                                          ""
-                                                                      ? authors2
-                                                                      : authorController!
-                                                                          .text),
-                                                              readOnly: false,
-                                                              maxLines: null,
-                                                            ),
-                                                            TextField(
-                                                              decoration:
-                                                                  const InputDecoration(
-                                                                      labelText:
-                                                                          "Publication Date"),
-                                                              controller: pubDateController = TextEditingController(
-                                                                  text: pubDateController!
-                                                                              .text ==
-                                                                          ""
-                                                                      ? pubDate2
-                                                                      : pubDateController!
-                                                                          .text),
-                                                              readOnly: false,
-                                                              maxLines: null,
-                                                            ),
-                                                            SizedBox(
-                                                              height: ResponsiveUtil
-                                                                      .heightVar /
-                                                                  80,
-                                                            ),
-                                                            Text(
-                                                                "Date Added: ${dateAdded.toDate().toString()}")
-                                                            // Add more details as needed
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      actions: <Widget>[
-                                                        Row(
-                                                          children: [
-                                                            Expanded(
-                                                              flex: 1,
-                                                              child: Container(
-                                                                alignment: Alignment
-                                                                    .centerLeft,
-                                                                color: Colors
-                                                                    .transparent,
-                                                                child: Center(
-                                                                  child:
-                                                                      TextButton(
-                                                                    child:
-                                                                        const Text(
-                                                                      "Delete",
-                                                                      style: TextStyle(
-                                                                          color:
-                                                                              Colors.deepPurple),
-                                                                    ),
-                                                                    onPressed:
-                                                                        () {
-                                                                      deleteData(
-                                                                          pdf.uid!);
-                                                                    },
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            Expanded(
-                                                              flex: 1,
-                                                              child: Container(
-                                                                color: ColorUtils
-                                                                    .darkPurple,
-                                                                child: Center(
-                                                                  child:
-                                                                      TextButton(
-                                                                    child:
-                                                                        const Text(
-                                                                      "Save",
-                                                                      style: TextStyle(
-                                                                          color:
-                                                                              Colors.white),
-                                                                    ),
-                                                                    onPressed:
-                                                                        () {
-                                                                      editData(
-                                                                          pdf
-                                                                              .uid!,
-                                                                          titleController!
-                                                                              .text,
-                                                                          authorController!
-                                                                              .text,
-                                                                          pubDateController!
-                                                                              .text);
-                                                                    },
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      ],
-                                                    );
-                                                  },
+                                                editDeleteDialog(
+                                                  titleController,
+                                                  authorController,
+                                                  pubDateController,
+                                                  title2,
+                                                  authors2,
+                                                  pubDate2,
+                                                  uid,
                                                 );
                                               },
                                               icon: const Icon(

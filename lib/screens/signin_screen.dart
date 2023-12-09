@@ -1,10 +1,13 @@
 // ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:metxtract/screens/home_screen.dart';
 import 'package:metxtract/utils/color_utils.dart';
 import 'package:metxtract/utils/responsize_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../utils/loading_dialog.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -21,28 +24,34 @@ class _SignInState extends State<SignIn> {
   bool isVisible = true;
 
   signIn() async {
+    LoadingDialog.showLoadingDialog(context, 'Signing in');
+
     try {
       final user = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      Navigator.pop(context); // Close the loading dialog.
+
       if (user != null) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        print("Error!");
+        Fluttertoast.showToast(msg: "Error");
       }
     } on FirebaseAuthException catch (e) {
-      print(e.message);
+      Navigator.pop(context); // Close the loading dialog.
+      Fluttertoast.showToast(msg: e.message!);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorUtils.background,
+      backgroundColor: ColorUtils.gray1,
       body: Container(
         margin: EdgeInsets.only(
           left: ResponsiveUtil.widthVar / 25,
@@ -51,7 +60,14 @@ class _SignInState extends State<SignIn> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("METXTRACT"),
+            Image.asset(
+              "assets/images/2.png",
+              width: ResponsiveUtil.widthVar / 1.5,
+              fit: BoxFit.fitHeight,
+            ),
+            SizedBox(
+              height: ResponsiveUtil.heightVar / 20,
+            ),
             TextField(
               onChanged: (value) {
                 email = value;
@@ -66,6 +82,9 @@ class _SignInState extends State<SignIn> {
                 filled: true,
                 fillColor: Colors.white,
               ),
+            ),
+            SizedBox(
+              height: ResponsiveUtil.heightVar / 80,
             ),
             TextField(
               onChanged: (value) {
@@ -101,13 +120,16 @@ class _SignInState extends State<SignIn> {
                 fillColor: Colors.white,
               ),
             ),
+            SizedBox(
+              height: ResponsiveUtil.heightVar / 80,
+            ),
             Row(
               children: [
                 Expanded(
                   child: TextButton(
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                          ColorUtils.darkPurple),
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(ColorUtils.gray2),
                       shape: MaterialStateProperty.all<OutlinedBorder>(
                         const ContinuousRectangleBorder(
                           borderRadius: BorderRadius.zero,

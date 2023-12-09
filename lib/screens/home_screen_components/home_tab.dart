@@ -21,7 +21,6 @@ class HomeTab extends StatefulWidget {
 class _HomeTabState extends State<HomeTab> {
   final List<String> _scannedPictures = [];
   PdfDocument document = PdfDocument();
-  Uint8List? _pdfBytes;
   Uint8List? uint8List;
   Uint8List? uint8List1;
 
@@ -71,9 +70,6 @@ class _HomeTabState extends State<HomeTab> {
           image, Rect.fromLTWH(0, 0, page.size.width, page.size.height));
     }
 
-    print('_pdfBytes length: ${_pdfBytes?.length}');
-
-    // Dispose of the PDF document.
     document.dispose();
   }
 
@@ -184,9 +180,9 @@ class _HomeTabState extends State<HomeTab> {
                 height: ResponsiveUtil.heightVar / 80,
               ),
               const Text(
-                "Lorem ipsum dolor sit amet. Non officiis impedit in quia sint et illum beatae. Et molestias illum qui inventore vero qui laborum optio eos expedita dolore et Quis magnam et velit aperiam.",
+                "METXTRACT serves as a platform for scholarly research, providing a comprehensive range of features and resources tailored to the needs of academics, researchers, and students. It serves as our final requirement for Capstone Project 2 for the first semester of the Academic Year 2023-2024.",
                 textAlign: TextAlign.justify,
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 15),
               ),
               SizedBox(
                 height: ResponsiveUtil.heightVar / 60,
@@ -241,7 +237,7 @@ class _HomeTabState extends State<HomeTab> {
                                     alignment: Alignment.bottomLeft,
                                     child: const Icon(
                                       Icons.line_axis,
-                                      color: Colors.yellow,
+                                      color: ColorUtils.darkPurple,
                                       size: 25,
                                     ),
                                   ),
@@ -302,7 +298,7 @@ class _HomeTabState extends State<HomeTab> {
                                   alignment: Alignment.bottomLeft,
                                   child: const Icon(
                                     Icons.line_axis,
-                                    color: Colors.yellow,
+                                    color: ColorUtils.darkPurple,
                                     size: 25,
                                   ),
                                 ),

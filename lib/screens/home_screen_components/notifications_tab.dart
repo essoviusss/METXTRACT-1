@@ -10,9 +10,9 @@ class NotificationsTab extends StatefulWidget {
 class _NotificationsTabState extends State<NotificationsTab> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text("Notif Tab"),
+        child: Image.asset("assets/images/Maintenance.png"),
       ),
     );
   }
