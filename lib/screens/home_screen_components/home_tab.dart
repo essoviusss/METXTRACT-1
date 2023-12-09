@@ -169,7 +169,7 @@ class _HomeTabState extends State<HomeTab> {
               Container(
                 alignment: Alignment.topLeft,
                 child: const Text(
-                  "Welcome Admin!",
+                  "Hello Admin!",
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
@@ -180,7 +180,7 @@ class _HomeTabState extends State<HomeTab> {
                 height: ResponsiveUtil.heightVar / 80,
               ),
               const Text(
-                "METXTRACT serves as a platform for scholarly research, providing a comprehensive range of features and resources tailored to the needs of academics, researchers, and students. It serves as our final requirement for Capstone Project 2 for the first semester of the Academic Year 2023-2024.",
+                "Welcome back! Get familiar with the dashboard and view and upload thesis on-the-go!",
                 textAlign: TextAlign.justify,
                 style: TextStyle(fontSize: 15),
               ),
@@ -310,6 +310,30 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                 ],
+              ),
+              SizedBox(
+                height: ResponsiveUtil.heightVar / 20,
+              ),
+              const Text(
+                "Backgrounds should be plain and unobtrusive providing no distraction from the area of interest.",
+                textAlign: TextAlign.justify,
+                style: TextStyle(fontSize: 15),
+              ),
+              SizedBox(
+                height: ResponsiveUtil.heightVar / 30,
+              ),
+              const Text(
+                "General library light may not be sufficient to Light an image. Consider using flash.",
+                textAlign: TextAlign.justify,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(
+                height: ResponsiveUtil.heightVar / 30,
+              ),
+              const Text(
+                "Images must be in focus. If your camera is too close to the paper, this usually results in an out of focus photograph. Try taking the picture a bit further back.",
+                textAlign: TextAlign.justify,
+                style: TextStyle(fontSize: 15),
               ),
             ],
           ),
