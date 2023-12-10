@@ -38,9 +38,12 @@ class _ViewPdfState extends State<ViewPdf> {
   var uuid = const Uuid();
   String? uid;
   final List<String> textBlocks = [];
-  String? authorsText;
+  String? titleText, authorsText, pubDateText;
   var now = DateTime.now();
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  TextEditingController titleController = TextEditingController();
+  TextEditingController authorsController = TextEditingController();
+  TextEditingController pubDateController = TextEditingController();
 
   getImage() async {
     final document = await PdfDocument.openData(widget.pdfBytes);
@@ -100,8 +103,14 @@ class _ViewPdfState extends State<ViewPdf> {
 
         // Split the author names by line breaks and join them with commas
         final List<String> authorLines = textBlocks[1].split('\n');
-        authorsText = authorLines.join(', ');
+
+        titleController.text = textBlocks[0];
+        authorsController.text = authorLines.join(', ');
+        pubDateController.text = textBlocks[4];
         final sContext = scaffoldKey.currentState?.context;
+
+        // Set initial values for the controllers
+
         showDialog<void>(
           context: sContext!,
           builder: (BuildContext context) {
@@ -141,7 +150,12 @@ class _ViewPdfState extends State<ViewPdf> {
                           fontSize: 25,
                         ),
                       ),
-                      controller: TextEditingController(text: textBlocks[0]),
+                      controller: titleController,
+                      onChanged: (value) {
+                        setState(() {
+                          titleController.text = value;
+                        });
+                      },
                       readOnly: false,
                       maxLines: null,
                     ),
@@ -153,7 +167,12 @@ class _ViewPdfState extends State<ViewPdf> {
                           fontSize: 25,
                         ),
                       ),
-                      controller: TextEditingController(text: authorsText),
+                      controller: authorsController,
+                      onChanged: (value) {
+                        setState(() {
+                          authorsController.text = value;
+                        });
+                      },
                       readOnly: false,
                       maxLines: null,
                     ),
@@ -165,7 +184,12 @@ class _ViewPdfState extends State<ViewPdf> {
                           fontSize: 25,
                         ),
                       ),
-                      controller: TextEditingController(text: textBlocks[4]),
+                      controller: pubDateController,
+                      onChanged: (value) {
+                        setState(() {
+                          pubDateController.text = value;
+                        });
+                      },
                       readOnly: false,
                     ),
                   ],
@@ -327,9 +351,9 @@ class _ViewPdfState extends State<ViewPdf> {
           await imageStorageReference.getDownloadURL();
 
       Pdf pdfModel = Pdf();
-      pdfModel.title = textBlocks[0];
-      pdfModel.authors = authorsText;
-      pdfModel.publicationDate = textBlocks[4];
+      pdfModel.title = titleController.text;
+      pdfModel.authors = authorsController.text;
+      pdfModel.publicationDate = pubDateController.text;
       pdfModel.uid = uid;
       pdfModel.userId = userId;
       pdfModel.pdfDownloadUrl = pdfDownloadUrl;
