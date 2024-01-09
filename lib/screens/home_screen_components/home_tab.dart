@@ -5,7 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/services.dart';
-import 'package:metxtract/screens/view_pdf_components/view_pdf.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:metxtract/screens/view_pdf_components/scan_image_pdf.dart';
+import 'package:metxtract/screens/view_pdf_components/scan_pdf.dart';
 import 'package:metxtract/utils/color_utils.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -23,6 +25,7 @@ class _HomeTabState extends State<HomeTab> {
   PdfDocument document = PdfDocument();
   Uint8List? uint8List;
   Uint8List? uint8List1;
+  int? pageNum;
 
   @override
   void initState() {
@@ -34,15 +37,47 @@ class _HomeTabState extends State<HomeTab> {
 
   Future<void> scanPDF() async {
     List<String> scannedPictures;
+
     try {
       scannedPictures = await CunningDocumentScanner.getPictures() ?? [];
+
       if (!mounted) return;
+
+      int imageCount = 1;
+
+      for (String imagePath in scannedPictures) {
+        InputImage inputImage = await loadImage(imagePath);
+
+        final textRecognizer =
+            TextRecognizer(script: TextRecognitionScript.latin);
+        final RecognizedText recognizedText =
+            await textRecognizer.processImage(inputImage);
+
+        // Extracting recognized text
+        String recognized = recognizedText.text;
+
+        if (recognized.toLowerCase().contains("abstract")) {
+          break;
+        }
+
+        imageCount++;
+      }
+
       setState(() {
         _scannedPictures.addAll(scannedPictures);
       });
+      pageNum = imageCount;
+      print("Number of images until 'Abstract' found: $imageCount");
     } catch (e) {
       Fluttertoast.showToast(msg: "Error uploading PDF $e");
     }
+  }
+
+  Future<InputImage> loadImage(String imagePath) async {
+    // Create an InputImage object directly from the image file using Firebase ML Vision
+    InputImage inputImage = InputImage.fromFilePath(imagePath);
+
+    return inputImage;
   }
 
   Future<void> uploadConvertedFile() async {
@@ -111,8 +146,9 @@ class _HomeTabState extends State<HomeTab> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ViewPdf(
+        builder: (context) => TestScan1(
           pdfBytes: uint8List!,
+          pageNum: pageNum!,
         ),
       ),
     );
@@ -137,7 +173,7 @@ class _HomeTabState extends State<HomeTab> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ViewPdf(
+              builder: (context) => TestScan(
                 pdfBytes: uint8List1!,
               ),
             ),

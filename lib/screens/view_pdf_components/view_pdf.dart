@@ -21,10 +21,12 @@ import 'package:uuid/uuid.dart';
 
 class ViewPdf extends StatefulWidget {
   final Uint8List pdfBytes;
+  final int abstractPage;
 
   const ViewPdf({
     Key? key,
     required this.pdfBytes,
+    required this.abstractPage,
   }) : super(key: key);
 
   @override
@@ -32,8 +34,8 @@ class ViewPdf extends StatefulWidget {
 }
 
 class _ViewPdfState extends State<ViewPdf> {
-  InputImage? inputImage;
-  PdfPageImage? image;
+  InputImage? inputImage, inputImage1;
+  PdfPageImage? image, image1;
   CollectionReference pdf = FirebaseFirestore.instance.collection('pdfList');
   var uuid = const Uuid();
   String? uid;
@@ -44,7 +46,10 @@ class _ViewPdfState extends State<ViewPdf> {
   TextEditingController titleController = TextEditingController();
   TextEditingController authorsController = TextEditingController();
   TextEditingController pubDateController = TextEditingController();
-
+  TextEditingController adviserController = TextEditingController();
+  TextEditingController methodController = TextEditingController();
+  TextEditingController keywordsController = TextEditingController();
+  String? selectedResearchType, researchDesign;
   getImage() async {
     final document = await PdfDocument.openData(widget.pdfBytes);
 
@@ -61,20 +66,47 @@ class _ViewPdfState extends State<ViewPdf> {
     return inputImage;
   }
 
+  getImage1() async {
+    final document1 = await PdfDocument.openData(widget.pdfBytes);
+
+    final page1 = await document1.getPage(widget.abstractPage);
+
+    image1 = await page1.render(
+      width: page1.width * 2,
+      height: page1.height * 2,
+      format: PdfPageImageFormat.jpeg,
+    );
+
+    inputImage1 = await convertPdfPageImageToInputImage(image1!);
+
+    return inputImage1;
+  }
+
   scanText() async {
     try {
       if (image != null) {
         final Uint8List imageData = image!.bytes;
+        final Uint8List imageData1 = image1!.bytes;
         final tempDir = await getTemporaryDirectory();
+        final tempDir1 = await getTemporaryDirectory();
         final tempFile = File('${tempDir.path}/temp_image.jpg');
+        final tempFile1 = File('${tempDir.path}/temp_image1.jpg');
         await tempFile.writeAsBytes(imageData);
+        await tempFile1.writeAsBytes(imageData1);
         final inputImage = InputImage.fromFile(tempFile);
+        final inputImage1 = InputImage.fromFile(tempFile1);
+
         final textRecognizer =
+            TextRecognizer(script: TextRecognitionScript.latin);
+        final textRecognizer1 =
             TextRecognizer(script: TextRecognitionScript.latin);
         final RecognizedText recognizedText =
             await textRecognizer.processImage(inputImage);
+        final RecognizedText recognizedText1 =
+            await textRecognizer.processImage(inputImage1);
 
         textRecognizer.close();
+        textRecognizer1.close();
 
         String currentBlock = '';
         int blockNumber = 1;
@@ -101,15 +133,77 @@ class _ViewPdfState extends State<ViewPdf> {
           textBlocks.add(currentBlock);
         }
 
+        String adviserText = '';
+        String keywordsText = '';
+
+        for (TextBlock block in recognizedText1.blocks) {
+          String blockText = block.text;
+
+          if (RegExp(r'Adviser', caseSensitive: false).hasMatch(blockText)) {
+            int adviserIndex = blockText.indexOf('Adviser:');
+            if (adviserIndex != -1 && adviserIndex < blockText.length - 1) {
+              adviserText =
+                  blockText.substring(adviserIndex + 'Adviser:'.length).trim();
+            }
+            break;
+          }
+        }
+
+        List<String> desiredTerms = [
+          'waterfall',
+          'agile',
+          'lean',
+          'extreme programming',
+          'scrum',
+          'rapid application development',
+          'feature driven development',
+          'devops',
+          'spiral',
+          'kanban'
+        ];
+
+        String? foundTerm;
+
+        for (TextBlock block in recognizedText1.blocks) {
+          String blockText = block.text
+              .toLowerCase(); // Convert to lowercase for case-insensitive comparison
+
+          for (String term in desiredTerms) {
+            if (RegExp(term, caseSensitive: false).hasMatch(blockText)) {
+              foundTerm = term;
+              break; // Stop searching if a match is found
+            }
+          }
+
+          if (foundTerm != null) {
+            break; // Stop the outer loop if a match is found
+          }
+        }
+
+        for (TextBlock block in recognizedText1.blocks) {
+          String blockText = block.text;
+
+          if (RegExp(r'Keywords', caseSensitive: false).hasMatch(blockText)) {
+            int keywordsIndex = blockText.indexOf('Keywords:');
+            if (keywordsIndex != -1 && keywordsIndex < blockText.length - 1) {
+              keywordsText = blockText
+                  .substring(keywordsIndex + 'Keywords:'.length)
+                  .trim();
+            }
+            break;
+          }
+        }
+
         // Split the author names by line breaks and join them with commas
         final List<String> authorLines = textBlocks[1].split('\n');
 
         titleController.text = textBlocks[0];
         authorsController.text = authorLines.join(', ');
         pubDateController.text = textBlocks[4];
+        adviserController.text = adviserText;
+        methodController.text = foundTerm!;
+        keywordsController.text = keywordsText;
         final sContext = scaffoldKey.currentState?.context;
-
-        // Set initial values for the controllers
 
         showDialog<void>(
           context: sContext!,
@@ -147,7 +241,7 @@ class _ViewPdfState extends State<ViewPdf> {
                         labelText: "Title",
                         labelStyle: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 25,
+                          fontSize: 18,
                         ),
                       ),
                       controller: titleController,
@@ -164,7 +258,7 @@ class _ViewPdfState extends State<ViewPdf> {
                         labelText: "Author/s",
                         labelStyle: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 25,
+                          fontSize: 18,
                         ),
                       ),
                       controller: authorsController,
@@ -181,7 +275,7 @@ class _ViewPdfState extends State<ViewPdf> {
                         labelText: "Publication Date",
                         labelStyle: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 25,
+                          fontSize: 18,
                         ),
                       ),
                       controller: pubDateController,
@@ -192,6 +286,104 @@ class _ViewPdfState extends State<ViewPdf> {
                       },
                       readOnly: false,
                     ),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: "Adviser",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      controller: adviserController,
+                      onChanged: (value) {
+                        setState(() {
+                          adviserController.text = value;
+                        });
+                      },
+                      readOnly: false,
+                    ),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: "Methodology",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      controller: methodController,
+                      onChanged: (value) {
+                        setState(() {
+                          methodController.text = value;
+                        });
+                      },
+                      readOnly: false,
+                    ),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: "Keywords",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      controller: keywordsController,
+                      onChanged: (value) {
+                        setState(() {
+                          keywordsController.text = value;
+                        });
+                      },
+                      readOnly: false,
+                    ),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: "Research Design",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      value: researchDesign ?? "Experimental",
+                      items: [
+                        "Experimental",
+                        "Quasi-experimental",
+                        "Correlational",
+                        "Descriptive",
+                      ].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          researchDesign = value;
+                        });
+                      },
+                    ),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: "Research Type",
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      value: selectedResearchType ?? "Qualitative",
+                      items: [
+                        "Qualitative",
+                        "Quantitative",
+                      ].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedResearchType = value;
+                        });
+                      },
+                    )
                   ],
                 ),
               ),
@@ -354,6 +546,11 @@ class _ViewPdfState extends State<ViewPdf> {
       pdfModel.title = titleController.text;
       pdfModel.authors = authorsController.text;
       pdfModel.publicationDate = pubDateController.text;
+      pdfModel.adviser = adviserController.text;
+      pdfModel.methodology = methodController.text;
+      pdfModel.keywords = keywordsController.text;
+      pdfModel.researchDesign = researchDesign;
+      pdfModel.researchType = selectedResearchType;
       pdfModel.uid = uid;
       pdfModel.userId = userId;
       pdfModel.pdfDownloadUrl = pdfDownloadUrl;
@@ -393,6 +590,7 @@ class _ViewPdfState extends State<ViewPdf> {
           ),
           onPressed: () async {
             final image = await getImage();
+            final image1 = await getImage1();
             showImageDialog(image);
           },
           child: const Text(

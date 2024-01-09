@@ -68,13 +68,28 @@ class _DocsTabState extends State<DocsTab> {
       }
     }
 
-    editData(String id, title, author, pubDate) async {
+    editData(
+      String id,
+      title,
+      author,
+      pubDate,
+      adviser,
+      method,
+      keywords,
+      researchDesign,
+      selectedResearchType,
+    ) async {
       LoadingDialog.showLoadingDialog(context, 'Updating');
       try {
         final edtData = await pdfList.doc(id).update({
           'title': title,
           'authors': author,
           'publicationDate': pubDate,
+          'adviser': adviser,
+          'methodology': method,
+          'keywords': keywords,
+          'researchDesign': researchDesign,
+          'researchType': selectedResearchType,
         });
         Fluttertoast.showToast(msg: "Document Updated Successfully!");
         scaffoldKey.currentState?.closeDrawer();
@@ -160,7 +175,8 @@ class _DocsTabState extends State<DocsTab> {
       );
     }
 
-    editConfirmation(String id, title, author, pubDate) async {
+    editConfirmation(String id, title, author, pubDate, adviser, method,
+        keywords, researchDesign, selectedResearchType) async {
       final sContext = scaffoldKey.currentState?.context;
       showDialog(
         context: sContext!,
@@ -216,7 +232,8 @@ class _DocsTabState extends State<DocsTab> {
                             ColorUtils.darkPurple),
                       ),
                       onPressed: () {
-                        editData(id, title, author, pubDate);
+                        editData(id, title, author, pubDate, adviser, method,
+                            keywords, researchDesign, selectedResearchType);
                       },
                       child: const Text(
                         "Yes",
@@ -232,8 +249,22 @@ class _DocsTabState extends State<DocsTab> {
       );
     }
 
-    editDeleteDialog(TextEditingController? titleController, authorController,
-        pubDateController, String? title2, authors2, pubDate2, uid) async {
+    editDeleteDialog(
+        TextEditingController? titleController,
+        authorController,
+        pubDateController,
+        adviserController,
+        methodController,
+        keywordsController,
+        String? title2,
+        authors2,
+        pubDate2,
+        adviser2,
+        method2,
+        keywords2,
+        researchDesign,
+        selectedResearchType,
+        uid) async {
       final sContext = scaffoldKey.currentState?.context;
       showDialog(
         context: sContext!,
@@ -272,7 +303,7 @@ class _DocsTabState extends State<DocsTab> {
                       labelText: "Title:",
                       labelStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 25,
+                        fontSize: 18,
                       ),
                     ),
                     controller: titleController = TextEditingController(
@@ -287,7 +318,7 @@ class _DocsTabState extends State<DocsTab> {
                       labelText: "Author/s",
                       labelStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 25,
+                        fontSize: 18,
                       ),
                     ),
                     controller: authorController = TextEditingController(
@@ -302,7 +333,7 @@ class _DocsTabState extends State<DocsTab> {
                       labelText: "Publication Date",
                       labelStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 25,
+                        fontSize: 18,
                       ),
                     ),
                     controller: pubDateController = TextEditingController(
@@ -311,6 +342,99 @@ class _DocsTabState extends State<DocsTab> {
                             : pubDateController!.text),
                     readOnly: false,
                     maxLines: null,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Adviser",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    controller: adviserController = TextEditingController(
+                        text: adviserController!.text == ""
+                            ? adviser2
+                            : adviserController!.text),
+                    readOnly: false,
+                    maxLines: null,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Methodology",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    controller: methodController = TextEditingController(
+                        text: methodController!.text == ""
+                            ? method2
+                            : methodController!.text),
+                    readOnly: false,
+                    maxLines: null,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Keywords",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    controller: keywordsController = TextEditingController(
+                        text: keywordsController!.text == ""
+                            ? keywords2
+                            : keywordsController!.text),
+                    readOnly: false,
+                    maxLines: null,
+                  ),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: "Research Design",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    value: researchDesign ?? "Experimental",
+                    items: [
+                      "Experimental",
+                      "Quasi-experimental",
+                      "Correlational",
+                      "Descriptive",
+                    ].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        researchDesign = value;
+                      });
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: "Research Type",
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    value: selectedResearchType,
+                    items: ["Qualitative", "Quantitative", "Descriptive"]
+                        .map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedResearchType = value;
+                      });
+                    },
                   ),
                   SizedBox(
                     height: ResponsiveUtil.heightVar / 80,
@@ -350,8 +474,17 @@ class _DocsTabState extends State<DocsTab> {
                             style: TextStyle(color: Colors.white),
                           ),
                           onPressed: () {
-                            editConfirmation(uid, titleController?.text,
-                                authorController.text, pubDateController.text);
+                            editConfirmation(
+                              uid,
+                              titleController?.text,
+                              authorController.text,
+                              pubDateController.text,
+                              adviserController.text,
+                              methodController.text,
+                              keywordsController.text,
+                              researchDesign,
+                              selectedResearchType,
+                            );
                           },
                         ),
                       ),
@@ -603,10 +736,23 @@ class _DocsTabState extends State<DocsTab> {
                                 textEditingControllerMap[documentId];
                             TextEditingController? pubDateController =
                                 textEditingControllerMap[documentId];
+                            TextEditingController? adviserController =
+                                textEditingControllerMap[documentId];
+                            TextEditingController? methodController =
+                                textEditingControllerMap[documentId];
+                            TextEditingController? keywordsController =
+                                textEditingControllerMap[documentId];
+
                             // Get the data from the document.
                             final String title2 = pdf.title ?? "";
                             final String pubDate2 = pdf.publicationDate ?? "";
                             final String authors2 = pdf.authors ?? "";
+                            final String adviser2 = pdf.adviser ?? "";
+                            final String method2 = pdf.methodology ?? "";
+                            final String keywords2 = pdf.keywords ?? "";
+                            final String researchDesign =
+                                pdf.researchDesign ?? "";
+                            final String researchType = pdf.researchType ?? "";
                             final String pdfUrl = pdf.pdfDownloadUrl ?? "";
                             final String uid = pdf.uid ?? "";
                             var dateAdded = pdf.dateAdded ?? "";
@@ -671,9 +817,17 @@ class _DocsTabState extends State<DocsTab> {
                                               titleController,
                                               authorController,
                                               pubDateController,
+                                              adviserController,
+                                              methodController,
+                                              keywordsController,
                                               title2,
                                               authors2,
                                               pubDate2,
+                                              adviser2,
+                                              method2,
+                                              keywords2,
+                                              researchDesign,
+                                              researchType,
                                               uid,
                                             );
                                           },
@@ -730,10 +884,23 @@ class _DocsTabState extends State<DocsTab> {
                                   textEditingControllerMap[documentId];
                               TextEditingController? pubDateController =
                                   textEditingControllerMap[documentId];
+                              TextEditingController? adviserController =
+                                  textEditingControllerMap[documentId];
+                              TextEditingController? methodController =
+                                  textEditingControllerMap[documentId];
+                              TextEditingController? keywordsController =
+                                  textEditingControllerMap[documentId];
                               // Get the data from the document.
                               final String title2 = pdf.title ?? "";
                               final String pubDate2 = pdf.publicationDate ?? "";
                               final String authors2 = pdf.authors ?? "";
+                              final String adviser2 = pdf.adviser ?? "";
+                              final String method2 = pdf.methodology ?? "";
+                              final String keywords2 = pdf.keywords ?? "";
+                              final String researchDesign =
+                                  pdf.researchDesign ?? "";
+                              final String researchType =
+                                  pdf.researchType ?? "";
                               final String imageUrl = pdf.imgDownloadUrl ?? "";
                               final String uid = pdf.uid ?? "";
                               var dateAdded = pdf.dateAdded ?? "";
@@ -804,9 +971,17 @@ class _DocsTabState extends State<DocsTab> {
                                                   titleController,
                                                   authorController,
                                                   pubDateController,
+                                                  adviserController,
+                                                  methodController,
+                                                  keywordsController,
                                                   title2,
                                                   authors2,
                                                   pubDate2,
+                                                  adviser2,
+                                                  method2,
+                                                  keywords2,
+                                                  researchDesign,
+                                                  researchType,
                                                   uid,
                                                 );
                                               },
